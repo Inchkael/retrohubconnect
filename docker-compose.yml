@@ -1,0 +1,33 @@
+services:
+  retrohubconnect_web:
+    build: .
+    container_name: retrohubconnect_web
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/www/retrohubconnect
+    depends_on:
+      - retrohubconnect_db
+    networks:
+      - retrohubconnect-net
+
+  retrohubconnect_db:
+    image: mariadb:latest
+    container_name: retrohubconnect_db
+    restart: always
+    ports:
+      - "3311:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: retrohubconnect
+      MYSQL_DATABASE: retrohubconnect_db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: password
+    volumes:
+      - ./.data:/var/lib/mysql
+    networks:
+      - retrohubconnect-net
+
+networks:
+  retrohubconnect-net:
+    driver: bridge
