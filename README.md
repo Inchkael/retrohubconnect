@@ -1,58 +1,156 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Espace Bien-être - Projet d'Examen 2026
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Auteur** : Mickaël Collings
+**Date de remise** : 31/03/2026
+**Branche GitHub** : `examen_2026`
+**Lien GitHub** : https://github.com/Inchkael/projet-web-dynamique-collings.git
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📋 Description du Projet
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**Espace Bien-être** est une plateforme dédiée au bien-être, offrant des services de massage, yoga, méditation et coaching. Ce projet a été développé dans le cadre de l'examen 2026 et inclut :
+- Une interface utilisateur moderne avec des effets de *glassmorphisme*.
+- Un système de gestion des prestataires et des catégories de services.
+- Des fonctionnalités de recherche.
+- Une interface d'administration pour gérer les sliders, les catégories de services et les utilisateurs.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🛠 Prérequis
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Pour exécuter ce projet, assurez-vous d'avoir installé :
+- **Docker** (et Docker Compose)
+- **PHP 8.4**
+- **Composer**
+- **Node.js** (et npm)
+- **Git**
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- **Chemin du projet** : Placez-vous à la racine du dossier du projet (ex: `cd /chemin/vers/Espace-Bien-Etre`).
+- **Fichiers nécessaires** : Assurez-vous d'avoir les fichiers suivants dans le ZIP :
 
-## Agentic Development
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+/docker-compose.yml
 
-```bash
-composer require laravel/boost --dev
+/Dockerfile
 
-php artisan boost:install
-```
+/.env.example
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+/database/seeders/
 
-## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🚀 Installation et Lancement
 
-## Code of Conduct
+### 1. Cloner le projet
+git clone [lien_vers_votre_repo]
+cd Espace-Bien-Etre
+git checkout examen_2026
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 2. Builder l’image Docker
+docker-compose build
 
-## Security Vulnerabilities
+### 3. Lancer les conteneurs
+docker-compose up -d
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 4. Installer les dépendances PHP
+docker-compose exec app composer install
 
-## License
+### 5. Installer les dépendances npm
+docker-compose exec app npm install
+docker-compose exec app npm run dev
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 6. Configurer l’environnement
+Copiez le fichier .env.example en .env et adaptez les variables d’environnement, notamment pour la base de données :
+
+DB_CONNECTION=mariadb
+DB_HOST=db
+DB_PORT=3306
+DB_DATABASE=prj_web
+DB_USERNAME=admin
+DB_PASSWORD=password
+
+### 7. Générer la clé d’application
+docker-compose exec app php artisan key\:generate
+
+### 8. Lancer les migrations
+docker-compose exec app php artisan migrate
+
+### 9 . Jeux de Données
+
+Exécuter ces requêtes pour alimenter les tables :
+- commentaires_202603311655.sql
+- images_202603311655.sql
+- migrations_202603311655.sql
+- service_categories_202603311654.sql
+- service_category_user_202603311654.sql
+- sliders_202603311653.sql
+- users_202603311653.sql
+
+Chaque prestataire est associé à une catégorie de service et situé dans une ville différente (ex : Liège, Bruxelles, Namur, Gand, Anvers).
+Service du mois : La catégorie "Massage" est définie comme service du mois.
+
+### 10 . Créer le lien symbolique pour le stockage
+   docker-compose exec app php artisan storage\:link
+
+### 11 . Les utilisateurs :
+
+Utilisateur
+utilisateur@isl-edu.be
+utilisateur2026
+
+Provider
+provider@isl-edu.be
+provider2026
+
+Admin
+admin@isl-edu.be
+admin2026
+
+
+### 13 . Accéder à l’Application
+
+URL de l’application : http://localhost:8000
+PhpMyAdmin : http://localhost:8080
+
+Identifiants :
+
+Serveur : db
+Utilisateur : user
+Mot de passe : password
+
+🐳 Fichier Docker-Compose
+Voici la configuration Docker utilisée pour le projet :
+
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "8000:80"
+    depends_on:
+      - db
+  db:
+    image: mariadb:10.6
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+
+
+

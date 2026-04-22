@@ -7,6 +7,8 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "erusev/parsedown": "^1.8",
+        "intervention/image": "^4.0",
         "laravel-lang/lang": "^15.29",
         "laravel/framework": "^13.0",
         "laravel/sanctum": "^4.3",

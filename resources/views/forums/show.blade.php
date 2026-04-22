@@ -1,0 +1,97 @@
+@extends('layouts.layout')
+
+@section('content')
+    <div class="main-content">
+        <div class="container">
+            <!-- Affichage du forum -->
+            <div class="forum-card mb-4">
+                <h1>{{ $forum->name }}</h1>
+                <p>{{ $forum->description }}</p>
+            </div>
+
+            <!-- Liste des sujets -->
+            <h2>Sujets</h2>
+            @foreach($topics as $topic)
+                <div class="topic-card mb-3">
+                    <h3>
+                        <a href="{{ route('forums.topics.show', [$forum, $topic]) }}">
+                            {{ $topic->title }}
+                        </a>
+                    </h3>
+                    <p>{!! $parsedown->text(Str::limit($topic->content, 200)) !!}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <p class="mb-0">
+                            @if($topic->user)
+                                Créé par {{ $topic->user->name }} le
+                            @else
+                                Créé par un utilisateur inconnu le
+                            @endif
+                            @if($topic->created_at)
+                                {{ $topic->created_at->format('d/m/Y H:i') }}
+                            @else
+                                Date inconnue
+                            @endif
+                            | {{ $topic->replies_count }} réponses
+                        </p>
+                    </div>
+                </div>
+            @endforeach
+
+            <!-- Formulaire pour créer un nouveau sujet -->
+            @auth
+                <div class="mt-4">
+                    <h3>Créer un nouveau sujet</h3>
+                    <form id="topic-form" action="{{ route('forums.topics.store', $forum) }}" method="POST">
+                        @csrf
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Titre</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Contenu</label>
+                            <textarea class="form-control" id="topic-content" name="content" rows="5" required></textarea>
+                            <small class="form-text text-muted">
+                                Vous pouvez utiliser le <a href="https://www.markdownguide.org/basic-syntax/" target="_blank">Markdown</a> pour formater votre texte.
+                            </small>
+                        </div>
+                        <button type="button" id="submit-topic" class="btn btn-retro">Créer le sujet</button>
+                    </form>
+                </div>
+                <!-- Intégration de SimpleMDE pour l'éditeur Markdown -->
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplemde@1.11.2/dist/simplemde.min.css">
+                <script src="https://cdn.jsdelivr.net/npm/simplemde@1.11.2/dist/simplemde.min.js"></script>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // Initialisation de SimpleMDE pour le contenu du sujet
+                        var editor = new SimpleMDE({
+                            element: document.getElementById("topic-content"),
+                            spellChecker: false,
+                            placeholder: "Votre contenu...",
+                            autofocus: true
+                        });
+
+                        // Gestion de la soumission du formulaire
+                        document.getElementById('submit-topic').addEventListener('click', function() {
+                            // Récupère le contenu de l'éditeur SimpleMDE
+                            var content = editor.value();
+                            if (!content.trim()) {
+                                alert("Veuillez entrer un contenu pour le sujet.");
+                                return;
+                            }
+
+                            // Met à jour la valeur du textarea avec le contenu de l'éditeur
+                            document.getElementById('topic-content').value = content;
+
+                            // Soumet le formulaire
+                            document.getElementById('topic-form').submit();
+                        });
+                    });
+                </script>
+            @else
+                <div class="alert alert-info mt-4">
+                    Vous devez être connecté pour créer un sujet. <a href="{{ route('login') }}">Se connecter</a>
+                </div>
+            @endauth
+        </div>
+    </div>
+@endsection
