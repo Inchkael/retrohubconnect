@@ -5,24 +5,47 @@
         <div class="container">
             <!-- Affichage du forum -->
             <div class="forum-card mb-4">
-                <h1>{{ $forum->name }}</h1>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h1>{{ $forum->name }}</h1>
+                    @auth
+                        @if(Auth::user()->isAdmin())
+                            <div class="d-flex gap-2">
+                                <!-- Bouton pour gérer les sujets -->
+                                <a href="{{ route('admin.forums.topics.index', $forum) }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-list me-1"></i> Gérer les sujets
+                                </a>
+                            </div>
+                        @endif
+                    @endauth
+                </div>
                 <p>{{ $forum->description }}</p>
             </div>
 
             <!-- Liste des sujets -->
             <h2>Sujets</h2>
             @foreach($topics as $topic)
-                <div class="topic-card mb-3">
-                    <h3>
-                        <a href="{{ route('forums.topics.show', [$forum, $topic]) }}">
-                            {{ $topic->title }}
-                        </a>
-                    </h3>
-                    <p>{!! $parsedown->text(Str::limit($topic->content, 200)) !!}</p>
+                <div class="topic-card mb-3 p-3 bg-white rounded shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h3 class="mb-0">
+                            <a href="{{ route('forums.topics.show', [$forum, $topic]) }}">
+                                {{ $topic->title }}
+                            </a>
+                            @if($topic->is_locked)
+                                <span class="badge bg-warning text-dark ms-2">
+                                    <i class="fas fa-lock me-1"></i> Verrouillé
+                                </span>
+                            @endif
+                        </h3>
+                    </div>
+
+                    <div class="mb-3">
+                        <p>{!! $parsedown->text(Str::limit($topic->content, 200)) !!}</p>
+                    </div>
+
                     <div class="d-flex justify-content-between align-items-center">
                         <p class="mb-0">
                             @if($topic->user)
-                                Créé par {{ $topic->user->name }} le
+                                Créé par {{ $topic->user->first_name ?? '' }} {{ $topic->user->last_name ?? $topic->user->name }} le
                             @else
                                 Créé par un utilisateur inconnu le
                             @endif
@@ -39,8 +62,8 @@
 
             <!-- Formulaire pour créer un nouveau sujet -->
             @auth
-                <div class="mt-4">
-                    <h3>Créer un nouveau sujet</h3>
+                <div class="mt-4 bg-white p-4 rounded shadow-sm">
+                    <h3 class="mb-3">Créer un nouveau sujet</h3>
                     <form id="topic-form" action="{{ route('forums.topics.store', $forum) }}" method="POST">
                         @csrf
                         <div class="mb-3">
@@ -67,7 +90,13 @@
                             element: document.getElementById("topic-content"),
                             spellChecker: false,
                             placeholder: "Votre contenu...",
-                            autofocus: true
+                            autofocus: true,
+                            toolbar: [
+                                'bold', 'italic', 'heading', '|',
+                                'quote', 'unordered-list', 'ordered-list', '|',
+                                'link', 'image', '|',
+                                'preview', 'side-by-side', 'fullscreen'
+                            ]
                         });
 
                         // Gestion de la soumission du formulaire
@@ -94,4 +123,30 @@
             @endauth
         </div>
     </div>
+
+    <!-- CSS pour les cartes de sujet -->
+    <style>
+        .topic-card {
+            border-left: 4px solid #dee2e6;
+            position: relative;
+        }
+
+        .topic-card:nth-child(even) {
+            border-left-color: #0d6efd;
+        }
+
+        .topic-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -4px;
+            width: 4px;
+            height: 100%;
+        }
+
+        .badge.bg-warning.text-dark {
+            font-size: 0.8em;
+            padding: 0.25em 0.5em;
+        }
+    </style>
 @endsection

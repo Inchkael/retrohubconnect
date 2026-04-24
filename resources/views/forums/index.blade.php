@@ -28,21 +28,23 @@
                 </div>
             </div>
 
-            <!-- Bouton de gestion des catégories pour les administrateurs -->
+            <!-- Boutons de gestion pour les administrateurs -->
             @auth
                 @if(Auth::user()->isAdmin())
                     <div class="d-flex justify-content-end mb-3">
                         <a href="{{ route('admin.forum_categories.index') }}" class="btn btn-retro me-2">
-                            <i class="fas fa-cog me-1"></i> {{ __('Gérer les catégories') }}
+                            <i class="fas fa-tags me-1"></i> {{ __('Gérer les catégories') }}
                         </a>
-                        <a href="{{ route('admin.forums.index') }}" class="btn btn-retro">
+                        <a href="{{ route('admin.forums.index') }}" class="btn btn-retro me-2">
                             <i class="fas fa-comments me-1"></i> {{ __('Gérer les forums') }}
+                        </a>
+                        <!-- Utilise la nouvelle route globale pour les sujets -->
+                        <a href="{{ route('admin.forums.topics.global') }}" class="btn btn-retro">
+                            <i class="fas fa-list me-1"></i> {{ __('Gérer tous les sujets') }}
                         </a>
                     </div>
                 @endif
             @endauth
-
-
 
             <!-- Liste des catégories de forums -->
             @forelse($categories as $category)
@@ -53,6 +55,16 @@
                                 {{ $category->name }}
                             </h2>
                         </div>
+                        @auth
+                            @if(Auth::user()->isAdmin())
+                                <div>
+                                    <!-- Utilise la route par catégorie -->
+                                    <a href="{{ route('admin.forums.topics.by_category', $category->id) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-list me-1"></i> {{ __('Gérer les sujets') }}
+                                    </a>
+                                </div>
+                            @endif
+                        @endauth
                     </div>
                     <p class="mb-4" style="color: var(--text-color);">{{ $category->description }}</p>
 
@@ -64,9 +76,14 @@
                                         <h3 class="mb-0" style="color: var(--primary-color); font-weight: 600;">
                                             {{ $forum->name }}
                                         </h3>
-                                        <span class="badge">
-                                            {{ $forum->topics_count }} {{ __('sujet(s)') }}
-                                        </span>
+                                        <div class="text-end">
+                                            <span class="badge bg-primary mb-1 d-block">
+                                                <i class="fas fa-file-alt me-1"></i> {{ $forum->topics_count }} {{ __('sujet(s)') }}
+                                            </span>
+                                            <span class="badge bg-secondary d-block">
+                                                <i class="fas fa-comments me-1"></i> {{ $forum->replies_count ?? 0 }} {{ __('réponse(s)') }}
+                                            </span>
+                                        </div>
                                     </div>
                                     <p class="mb-3" style="color: var(--text-color);">
                                         {{ $forum->description }}
@@ -112,6 +129,11 @@
                                         <h4 class="mb-0" style="color: var(--primary-color);">
                                             <a href="{{ route('forums.topics.show', [$topic->forum, $topic]) }}" style="color: inherit; text-decoration: none;">
                                                 {{ $topic->title }}
+                                                @if($topic->is_locked)
+                                                    <span class="badge bg-warning text-dark ms-2">
+                                                        <i class="fas fa-lock me-1"></i> {{ __('Verrouillé') }}
+                                                    </span>
+                                                @endif
                                             </a>
                                         </h4>
                                         <span class="badge">

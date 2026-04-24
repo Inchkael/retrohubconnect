@@ -17,6 +17,7 @@ use App\Http\Controllers\ForumController;
 use App\Http\Controllers\ForumTopicController;
 use App\Http\Controllers\ForumLikeController;
 use App\Http\Controllers\ForumCategoryController;
+use App\Http\Controllers\ForumReplyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -384,30 +385,39 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
 
 
 
+// Routes publiques pour les forums (accessibles à tous)
+Route::get('/forums', [ForumController::class, 'index'])->name('forums.index');
+Route::get('/forums/{forum}', [ForumController::class, 'show'])->name('forums.show');
+Route::get('/forums/{forum}/topics/{topic}', [ForumTopicController::class, 'show'])->name('forums.topics.show');
+Route::get('/forums/search', [ForumController::class, 'search'])->name('forums.search');
 
-
+// Routes protégées pour les forums (nécessitent une authentification)
 Route::middleware(['auth'])->group(function () {
+    // Création de sujets
     Route::get('/forums/{forum}/topics/create', [ForumTopicController::class, 'create'])->name('forums.topics.create');
     Route::post('/forums/{forum}/topics', [ForumTopicController::class, 'store'])->name('forums.topics.store');
+
+    // Réponses aux sujets
+    Route::post('/forums/{forum}/topics/{topic}/replies', [ForumTopicController::class, 'storeReply'])->name('forums.topics.replies.store');
+
+    // Citation de réponses
+    Route::get('/forums/{topic}/replies/{reply}/quote', [ForumReplyController::class, 'quote'])->name('forums.replies.quote');
+
+    // Likes sur les réponses
+    Route::post('/forum-replies/{reply}/like', [ForumLikeController::class, 'toggleLike'])->name('forum.replies.like');
 });
 
-// Sujets et réponses
-Route::post('/forums/{forum}/topics/{topic}/replies', [ForumTopicController::class, 'storeReply'])
-    ->name('forums.topics.replies.store')
-    ->middleware('auth');
-Route::get('/forums/{forum}/topics/{topic}', [ForumTopicController::class, 'show'])->name('forums.topics.show');
-
-
-// Forums
-Route::resource('forums', ForumController::class);
-Route::middleware(['auth'])->group(function () {
-    Route::get('/forums/create', [ForumController::class, 'create'])->name('forums.create');
-    Route::post('/forums', [ForumController::class, 'store'])->name('forums.store');
-});
-
-Route::get('/forums/search', [\App\Http\Controllers\Admin\ForumController::class, 'search'])->name('forums.search');
-
+// Routes d'administration pour les forums (nécessitent un admin)
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Routes pour verrouiller/déverrouiller un sujet
+    Route::post('/forums/topics/{topic}/lock', [\App\Http\Controllers\Admin\ForumTopicController::class, 'lock'])->name('forums.topics.lock');
+    Route::post('/forums/topics/{topic}/unlock', [\App\Http\Controllers\Admin\ForumTopicController::class, 'unlock'])->name('forums.topics.unlock');
+    Route::delete('/admin/forums/topics/{topic}', [\App\Http\Controllers\Admin\ForumTopicController::class, 'destroy'])->name('forums.topics.destroy');
+    Route::get('/forums/topics/category/{category_id}', [\App\Http\Controllers\Admin\ForumTopicController::class, 'byCategory'])->name('forums.topics.by_category');
+    Route::get('/forums/topics', [\App\Http\Controllers\Admin\ForumTopicController::class, 'globalIndex'])->name('forums.topics.global');
+
+
+
     // Routes pour gérer les forums
     Route::get('/forums/create', [\App\Http\Controllers\Admin\ForumController::class, 'create'])->name('forums.create');
     Route::get('/forums/{forum}/edit', [\App\Http\Controllers\Admin\ForumController::class, 'edit'])->name('forums.edit');
@@ -415,19 +425,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/forums/{forum}', [\App\Http\Controllers\Admin\ForumController::class, 'destroy'])->name('forums.destroy');
     Route::get('/forums', [\App\Http\Controllers\Admin\ForumController::class, 'index'])->name('forums.index');
     Route::post('/forums', [\App\Http\Controllers\Admin\ForumController::class, 'store'])->name('forums.store');
-});
 
-
-// Likes sur les réponses
-Route::post('/forum-replies/{reply}/like', [ForumLikeController::class, 'toggleLike'])
-    ->name('forum.replies.like')
-    ->middleware('auth');
-
-
-
-
-
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     // Routes pour gérer les catégories de forums
     Route::get('/forum_categories', [ForumCategoryController::class, 'index'])->name('forum_categories.index');
     Route::get('/forum_categories/create', [ForumCategoryController::class, 'create'])->name('forum_categories.create');
@@ -437,6 +435,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/forum_categories/{forumCategory}', [ForumCategoryController::class, 'destroy'])->name('forum_categories.destroy');
 });
 
+// Routes pour la gestion des sujets (admin)
+Route::middleware(['auth', 'admin'])->prefix('admin/forums/{forum}')->name('admin.forums.')->group(function () {
+    Route::get('/topics', [\App\Http\Controllers\Admin\ForumTopicController::class, 'index'])->name('topics.index');
+    Route::get('/topics/create', [\App\Http\Controllers\Admin\ForumTopicController::class, 'create'])->name('topics.create');
+    Route::post('/topics', [\App\Http\Controllers\Admin\ForumTopicController::class, 'store'])->name('topics.store');
+    Route::get('/topics/{topic}/edit', [\App\Http\Controllers\Admin\ForumTopicController::class, 'edit'])->name('topics.edit');
+    Route::put('/topics/{topic}', [\App\Http\Controllers\Admin\ForumTopicController::class, 'update'])->name('topics.update');
+    Route::delete('/topics/{topic}', [\App\Http\Controllers\Admin\ForumTopicController::class, 'destroy'])->name('topics.destroy');
+});
 
 
 

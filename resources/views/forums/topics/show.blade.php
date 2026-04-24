@@ -11,101 +11,286 @@
 
             <!-- Affichage du sujet -->
             <div class="topic-card p-4 mb-4 bg-white rounded shadow-sm">
-                <h1>{{ $topic->title }}</h1>
-                <div class="my-3">{!! $parsedown->text($topic->content) !!}</div>
-                <p class="text-muted">
-                    Créé par <strong>{{ $topic->user->name ?? 'Utilisateur inconnu' }}</strong>
-                    le {{ $topic->created_at ? $topic->created_at->format('d/m/Y H:i') : 'Date inconnue' }}
-                </p>
-            </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center">
+                        <h1 class="mb-0 me-3">{{ $topic->title }}</h1>
+                        @if($topic->is_locked)
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-lock me-1"></i> Verrouillé
+                            </span>
+                        @endif
+                    </div>
 
-            <!-- Liste des réponses -->
-            <h2>Réponses</h2>
-            @forelse($replies as $reply)
-                <div class="reply-card p-3 mb-3 border rounded">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <strong>{{ $reply->user->name ?? 'Utilisateur inconnu' }}</strong>
-                            <small class="text-muted ms-2">
-                                {{ $reply->created_at ? $reply->created_at->format('d/m/Y H:i') : 'Date inconnue' }}
-                            </small>
-                        </div>
-                        <div>
-                            @auth
-                                <form action="{{ route('forum.replies.like', $reply) }}" method="POST" class="d-inline">
+                    @auth
+                        @if(Auth::user()->isAdmin())
+                            <div class="d-flex gap-2">
+                                @if($topic->is_locked)
+                                    <form action="{{ route('admin.forums.topics.unlock', $topic) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-success" title="Déverrouiller ce sujet">
+                                            <i class="fas fa-lock-open me-1"></i> Déverrouiller
+                                        </button>
+                                    </form>
+                                @else
+                                    <form action="{{ route('admin.forums.topics.lock', $topic) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-warning" title="Verrouiller ce sujet">
+                                            <i class="fas fa-lock me-1"></i> Verrouiller
+                                        </button>
+                                    </form>
+                                @endif
+
+                                <form action="{{ route('admin.forums.topics.destroy', $topic) }}" method="POST" onsubmit="return confirm('Supprimer ce sujet ?')">
                                     @csrf
-                                    <button type="submit" class="btn-like p-0 bg-transparent border-0">
-                                        @if($reply->likes->contains('user_id', Auth::id()))
-                                            <i class="fas fa-thumbs-up text-primary"></i> {{ $reply->likes->count() }}
-                                        @else
-                                            <i class="far fa-thumbs-up"></i> {{ $reply->likes->count() }}
-                                        @endif
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                        <i class="fas fa-trash me-1"></i> Supprimer
                                     </button>
                                 </form>
-                            @endauth
+                            </div>
+                        @endif
+                    @endauth
+                </div>
+
+                <!-- Contenu du sujet - visible uniquement si non verrouillé ou si admin -->
+                @if(!$topic->is_locked || (Auth::check() && Auth::user()->isAdmin()))
+                    <div class="my-3 post-content">{!! $parsedown->text($topic->content) !!}</div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                        <div class="d-flex align-items-center">
+                            @php
+                                $topicUser = $topic->user;
+                                $topicAvatar = $topicUser->avatar_url ?? 'https://via.placeholder.com/60';
+                            @endphp
+
+                            <div>
+                                <div>
+                                    <strong>{{ $topicUser->first_name ?? '' }} {{ $topicUser->last_name ?? $topicUser->name ?? 'Utilisateur inconnu' }}</strong>
+                                </div>
+                                <small class="text-muted">
+                                    Posté le {{ $topic->created_at->format('d/m/Y H:i') }}
+                                </small>
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-2">
-                        <p>{!! $parsedown->text($reply->content) !!}</p>
+                @else
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-lock me-2"></i> Ce sujet est verrouillé et réservé aux administrateurs.
                     </div>
-                </div>
-            @empty
-                <div class="alert alert-info">
-                    Aucune réponse pour ce sujet.
-                </div>
-            @endforelse
+                @endif
+            </div>
 
-            <!-- Formulaire pour répondre -->
-            @auth
-                <div class="mt-4">
-                    <h3>Répondre</h3>
-                    <form id="reply-form" action="{{ route('forums.topics.replies.store', [$forum, $topic]) }}" method="POST">
-                        @csrf
-                        <div class="mb-3">
-                            <textarea class="form-control" id="reply-content" name="content" rows="5" placeholder="Votre réponse..." required></textarea>
-                            <small class="form-text text-muted">
-                                Vous pouvez utiliser le <a href="https://www.markdownguide.org/basic-syntax/" target="_blank">Markdown</a> pour formater votre texte.
-                            </small>
+            <!-- Liste des réponses - visible uniquement si non verrouillé ou si admin -->
+            @if(!$topic->is_locked || (Auth::check() && Auth::user()->isAdmin()))
+                <h2 class="mb-3">Réponses ({{ $replies->count() }})</h2>
+
+                @forelse($replies as $reply)
+                    @php
+                        $replyUser = $reply->user;
+                        $replyAvatar = $replyUser->avatar_url ?? 'https://via.placeholder.com/50';
+                    @endphp
+                    <div class="reply-card p-3 mb-3 bg-white rounded shadow-sm">
+                        <div class="d-flex align-items-start">
+
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <strong>{{ $replyUser->first_name ?? '' }} {{ $replyUser->last_name ?? $replyUser->name ?? 'Utilisateur inconnu' }}</strong>
+                                        <small class="text-muted ms-2">
+                                            {{ $reply->created_at->format('d/m/Y H:i') }}
+                                        </small>
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        @auth
+                                            <!-- Bouton Like -->
+                                            <form action="{{ route('forum.replies.like', $reply) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary p-1" title="J'aime">
+                                                    @if($reply->likes->contains('user_id', Auth::id()))
+                                                        <i class="fas fa-thumbs-up text-primary"></i> <span>{{ $reply->likes->count() }}</span>
+                                                    @else
+                                                        <i class="far fa-thumbs-up"></i> <span>{{ $reply->likes->count() }}</span>
+                                                    @endif
+                                                </button>
+                                            </form>
+
+                                            <!-- Bouton Citer -->
+                                            <a href="{{ route('forums.replies.quote', [$topic, $reply]) }}" class="btn btn-sm btn-outline-secondary p-1" title="Citer">
+                                                <i class="fas fa-quote-left"></i>
+                                            </a>
+                                        @endauth
+                                    </div>
+                                </div>
+                                <div class="post-content mb-3">
+                                    {!! $parsedown->text($reply->content) !!}
+                                </div>
+                            </div>
                         </div>
-                        <button type="button" id="submit-reply" class="btn btn-retro">Répondre</button>
-                    </form>
-                </div>
-                <!-- Intégration de SimpleMDE pour l'éditeur Markdown -->
-                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplemde@1.11.2/dist/simplemde.min.css">
-                <script src="https://cdn.jsdelivr.net/npm/simplemde@1.11.2/dist/simplemde.min.js"></script>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        // Initialisation de SimpleMDE
-                        var editor = new SimpleMDE({
-                            element: document.getElementById("reply-content"),
-                            spellChecker: false,
-                            placeholder: "Votre réponse...",
-                            autofocus: true
-                        });
+                    </div>
+                @empty
+                    <div class="alert alert-info">
+                        Aucune réponse pour ce sujet. Soyez le premier à répondre !
+                    </div>
+                @endforelse
 
-                        // Gestion de la soumission du formulaire
-                        document.getElementById('submit-reply').addEventListener('click', function() {
-                            // Récupère le contenu de l'éditeur SimpleMDE
-                            var content = editor.value();
-                            if (!content.trim()) {
-                                alert("Veuillez entrer une réponse.");
-                                return;
-                            }
+                <!-- Formulaire pour répondre - visible uniquement si non verrouillé -->
+                @auth
+                    @if(!$topic->is_locked)
+                        <div class="mt-4 bg-white p-4 rounded shadow-sm">
+                            <h3 class="mb-3">Répondre</h3>
+                            <div class="d-flex align-items-start mb-3">
+                                @php
+                                    $authUser = Auth::user();
+                                    $authAvatar = $authUser->avatar_url ?? 'https://via.placeholder.com/50';
+                                @endphp
 
-                            // Met à jour la valeur du textarea avec le contenu de l'éditeur
-                            document.getElementById('reply-content').value = content;
+                                <div class="flex-grow-1">
+                                    <form id="reply-form" action="{{ route('forums.topics.replies.store', [$topic->forum, $topic]) }}" method="POST">
+                                        @csrf
+                                        <div class="mb-3">
+                                            <textarea class="form-control" id="reply-content" name="content" rows="5" placeholder="Votre réponse..." required></textarea>
+                                            <small class="form-text text-muted">
+                                                Vous pouvez utiliser le <a href="https://www.markdownguide.org/basic-syntax/" target="_blank">Markdown</a> pour formater votre texte.
+                                            </small>
+                                        </div>
+                                        <button type="button" id="submit-reply" class="btn btn-retro">Répondre</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Intégration de SimpleMDE pour l'éditeur Markdown -->
+                        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplemde@1.11.2/dist/simplemde.min.css">
+                        <script src="https://cdn.jsdelivr.net/npm/simplemde@1.11.2/dist/simplemde.min.js"></script>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                var editor = new SimpleMDE({
+                                    element: document.getElementById("reply-content"),
+                                    spellChecker: false,
+                                    placeholder: "Votre réponse...",
+                                    autofocus: true,
+                                    forceSync: true,
+                                    toolbar: [
+                                        'bold', 'italic', 'heading', '|',
+                                        'quote', 'unordered-list', 'ordered-list', '|',
+                                        'link', 'image', '|',
+                                        'preview', 'side-by-side', 'fullscreen'
+                                    ]
+                                });
 
-                            // Soumet le formulaire
-                            document.getElementById('reply-form').submit();
-                        });
-                    });
-                </script>
+                                // Gestion de la soumission du formulaire
+                                document.getElementById('submit-reply').addEventListener('click', function() {
+                                    var content = editor.value();
+                                    if (!content.trim()) {
+                                        alert("Veuillez entrer une réponse.");
+                                        return;
+                                    }
+
+                                    document.getElementById('reply-content').value = content;
+                                    document.getElementById('reply-form').submit();
+                                });
+                            });
+                        </script>
+                    @else
+                        <div class="alert alert-info mt-4">
+                            Ce sujet est verrouillé. Seuls les administrateurs peuvent y répondre.
+                        </div>
+                    @endif
+                @else
+                    <div class="alert alert-info mt-4">
+                        Vous devez être connecté pour répondre.
+                        <a href="{{ route('login') }}" class="btn btn-sm btn-primary ms-2">Se connecter</a>
+                    </div>
+                @endauth
             @else
-                <div class="alert alert-info mt-4">
-                    Vous devez être connecté pour répondre. <a href="{{ route('login') }}">Se connecter</a>
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-lock me-2"></i> Ce sujet est verrouillé et réservé aux administrateurs.
                 </div>
-            @endauth
+            @endif
         </div>
     </div>
-    
+
+    <!-- CSS pour les citations et les cartes de réponse -->
+    <style>
+        .post-content blockquote {
+            font-style: italic;
+            color: #555;
+            border-left: 3px solid #ccc;
+            padding-left: 15px;
+            margin: 10px 0;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 0 3px 3px 0;
+        }
+
+        .reply-card {
+            border-left: 4px solid #dee2e6;
+            position: relative;
+        }
+
+        .reply-card:nth-child(even) {
+            border-left-color: #0d6efd;
+        }
+
+        .reply-card img, .topic-card img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+        }
+
+        .topic-card img {
+            width: 60px;
+            height: 60px;
+        }
+
+        .post-content {
+            line-height: 1.6;
+        }
+
+        .badge {
+            font-size: 0.9em;
+            padding: 0.35em 0.65em;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-outline-secondary {
+            color: #6c757d;
+            border-color: #dee2e6;
+        }
+
+        .btn-outline-secondary:hover {
+            color: #0d6efd;
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+
+        /* Style pour les boutons de verrouillage */
+        .btn-warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+        }
+
+        .btn-warning:hover {
+            color: #664d03;
+            background-color: #ffe69c;
+            border-color: #ffd663;
+        }
+
+        .btn-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .btn-success:hover {
+            color: #155724;
+            background-color: #c3e6cb;
+            border-color: #b1dfbb;
+        }
+    </style>
 @endsection
