@@ -18,6 +18,11 @@ use App\Http\Controllers\ForumTopicController;
 use App\Http\Controllers\ForumLikeController;
 use App\Http\Controllers\ForumCategoryController;
 use App\Http\Controllers\ForumReplyController;
+use App\Http\Controllers\ItemController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\MessageController;
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -446,6 +451,35 @@ Route::middleware(['auth', 'admin'])->prefix('admin/forums/{forum}')->name('admi
 });
 
 
+Route::prefix('marketplace')->name('marketplace.')->group(function () {
+    Route::resource('items', \App\Http\Controllers\ItemController::class);
+    Route::resource('categories', \App\Http\Controllers\CategoryController::class);
+});
+
+Route::delete('marketplace/images/{image}', [\App\Http\Controllers\ItemController::class, 'destroyImage'])->name('marketplace.images.destroy');
+
+Route::post('marketplace/items/{item}/favorite', [ItemController::class, 'toggleFavorite'])->name('marketplace.items.favorite');
+Route::post('marketplace/items/{item}/reviews', [ReviewController::class, 'store'])->name('marketplace.reviews.store');
+Route::post('marketplace/reviews/{review}/helpful', [ReviewController::class, 'markHelpful'])->name('marketplace.reviews.helpful');
+Route::post('marketplace/reviews/{review}/report', [ReviewController::class, 'report'])->name('marketplace.reviews.report');
+
+Route::middleware(['auth'])->prefix('messages')->name('messages.')->group(function () {
+    // GET /messages -> affichera la boîte de réception
+    Route::get('/', [MessageController::class, 'inbox'])->name('inbox');
+
+    // GET /messages/compose -> formulaire de création
+    Route::get('/compose', [MessageController::class, 'compose'])->name('compose');
+
+    // POST /messages -> enregistrement
+    Route::post('/', [MessageController::class, 'store'])->name('store');
+
+    // GET /messages/5 -> voir un message spécifique
+    Route::get('/{message}', [MessageController::class, 'show'])->name('show');
+
+    // Actions sur les messages
+    Route::put('/{message}/read', [MessageController::class, 'markAsRead'])->name('read');
+    Route::patch('/{message}/important', [MessageController::class, 'markImportant'])->name('markImportant');
+});
 
 // Tableau de bord utilisateur
 Route::get('/dashboard', function () {

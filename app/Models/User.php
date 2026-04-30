@@ -279,6 +279,14 @@ class User extends Authenticatable
         $this->save();
     }
 
+    public function unreadMessages()
+    {
+        return $this->hasMany(Message::class, 'recipient_id')
+            ->where('is_read', false)
+            ->where('is_draft', false)
+            ->where('is_abuse_report', false);
+    }
+
 
 
 
