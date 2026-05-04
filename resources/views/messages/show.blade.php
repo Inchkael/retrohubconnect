@@ -154,15 +154,6 @@
                                     <label for="replyContent" class="form-label">Votre réponse</label>
                                     <textarea class="form-control" id="replyContent" name="content" rows="5" required></textarea>
                                 </div>
-
-                                {{-- Options --}}
-                                <div class="mb-3 form-check">
-                                    <input type="checkbox" class="form-check-input" id="saveDraft" name="save_as_draft" value="1">
-                                    <label class="form-check-label" for="saveDraft">
-                                        Enregistrer comme brouillon
-                                    </label>
-                                </div>
-
                                 <div class="mb-3 form-check">
                                     <input type="checkbox" class="form-check-input" id="notifyEmail" name="notify_email" value="1" checked>
                                     <label class="form-check-label" for="notifyEmail">

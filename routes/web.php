@@ -105,10 +105,6 @@ Route::get('/set-locale/{locale}', function ($locale) {
     return back(); // Retourne à la page précédente
 })->name('set.locale');
 
-
-// Route pour le marketplace
-Route::get('/marketplace', [PageController::class, 'marketplace'])->name('marketplace');
-
 // Route pour les forums
 Route::get('/forums', [PageController::class, 'forums'])->name('forums');
 
@@ -450,6 +446,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin/forums/{forum}')->name('admi
     Route::delete('/topics/{topic}', [\App\Http\Controllers\Admin\ForumTopicController::class, 'destroy'])->name('topics.destroy');
 });
 
+Route::get('/items/{item}', [ItemController::class, 'show'])->name('items.show');
 
 Route::prefix('marketplace')->name('marketplace.')->group(function () {
     Route::resource('items', \App\Http\Controllers\ItemController::class);
@@ -461,7 +458,10 @@ Route::delete('marketplace/images/{image}', [\App\Http\Controllers\ItemControlle
 Route::post('marketplace/items/{item}/favorite', [ItemController::class, 'toggleFavorite'])->name('marketplace.items.favorite');
 Route::post('marketplace/items/{item}/reviews', [ReviewController::class, 'store'])->name('marketplace.reviews.store');
 Route::post('marketplace/reviews/{review}/helpful', [ReviewController::class, 'markHelpful'])->name('marketplace.reviews.helpful');
-Route::post('marketplace/reviews/{review}/report', [ReviewController::class, 'report'])->name('marketplace.reviews.report');
+Route::post('marketplace/reviews/{review}/report', [ReviewController::class, 'reportReview'])->name('marketplace.reviews.report');
+
+// Nouvelle route unifiée pour les signalements (avis et commentaires)
+Route::post('reviews/{type}/{id}/report', [ReviewController::class, 'report'])->name('reviews.report');
 
 Route::middleware(['auth'])->prefix('messages')->name('messages.')->group(function () {
     // GET /messages -> affichera la boîte de réception

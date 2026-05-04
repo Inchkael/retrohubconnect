@@ -52,7 +52,7 @@
                     @endauth
                 </div>
 
-                <!-- Contenu du sujet - visible uniquement si non verrouillé ou si admin -->
+                <!-- Contenu du sujet -->
                 @if(!$topic->is_locked || (Auth::check() && Auth::user()->isAdmin()))
                     <div class="my-3 post-content">{!! $parsedown->text($topic->content) !!}</div>
 
@@ -80,7 +80,7 @@
                 @endif
             </div>
 
-            <!-- Liste des réponses - visible uniquement si non verrouillé ou si admin -->
+            <!-- Liste des réponses -->
             @if(!$topic->is_locked || (Auth::check() && Auth::user()->isAdmin()))
                 <h2 class="mb-3">Réponses ({{ $replies->count() }})</h2>
 
@@ -91,7 +91,6 @@
                     @endphp
                     <div class="reply-card p-3 mb-3 bg-white rounded shadow-sm">
                         <div class="d-flex align-items-start">
-
                             <div class="flex-grow-1">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <div>
@@ -119,6 +118,14 @@
                                             <a href="{{ route('forums.replies.quote', [$topic, $reply]) }}" class="btn btn-sm btn-outline-secondary p-1" title="Citer">
                                                 <i class="fas fa-quote-left"></i>
                                             </a>
+
+                                            <!-- Bouton Signaler -->
+                                            @if(Auth::id() !== $reply->user_id)
+                                                <button type="button" class="btn btn-sm btn-outline-danger p-1" title="Signaler"
+                                                        onclick="openReportModal('{{ $reply->id }}')">
+                                                    <i class="fas fa-flag"></i>
+                                                </button>
+                                            @endif
                                         @endauth
                                     </div>
                                 </div>
@@ -128,13 +135,51 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Modal pour signaler un commentaire -->
+                    <div id="reportModal-{{ $reply->id }}" class="custom-modal">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5>Signaler un commentaire</h5>
+                                <button type="button" class="btn-close" onclick="closeReportModal('{{ $reply->id }}')">×</button>
+                            </div>
+                            <form method="POST" action="{{ route('reviews.report', ['type' => 'reply', 'id' => $reply->id]) }}">
+                                @csrf
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Raison du signalement</label>
+                                        <select class="form-select" name="reason" required>
+                                            <option value="" selected disabled>Sélectionnez une raison</option>
+                                            <option value="spam">Contenu indésirable ou spam</option>
+                                            <option value="abusive">Langage abusif ou haineux</option>
+                                            <option value="off_topic">Hors sujet</option>
+                                            <option value="duplicate">Doublon</option>
+                                            <option value="other">Autre</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Commentaire (optionnel)</label>
+                                        <textarea class="form-control" name="comment" rows="3"></textarea>
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" name="notify_admin" value="1" checked>
+                                        <label class="form-check-label">Notifier l'administrateur</label>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" onclick="closeReportModal('{{ $reply->id }}')">Annuler</button>
+                                    <button type="submit" class="btn btn-primary">Envoyer le signalement</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 @empty
                     <div class="alert alert-info">
                         Aucune réponse pour ce sujet. Soyez le premier à répondre !
                     </div>
                 @endforelse
 
-                <!-- Formulaire pour répondre - visible uniquement si non verrouillé -->
+                <!-- Formulaire pour répondre -->
                 @auth
                     @if(!$topic->is_locked)
                         <div class="mt-4 bg-white p-4 rounded shadow-sm">
@@ -210,7 +255,7 @@
         </div>
     </div>
 
-    <!-- CSS pour les citations et les cartes de réponse -->
+    <!-- CSS pour les citations, les cartes de réponse et les modales -->
     <style>
         .post-content blockquote {
             font-style: italic;
@@ -292,5 +337,118 @@
             background-color: #c3e6cb;
             border-color: #b1dfbb;
         }
+
+        /* Style pour les modales personnalisées */
+        .custom-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+        }
+
+        .custom-modal .modal-content {
+            background-color: white;
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .custom-modal .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .custom-modal .modal-body {
+            margin-bottom: 15px;
+        }
+
+        .custom-modal .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        /* Style pour le bouton Signaler */
+        .btn-outline-danger {
+            color: #dc3545;
+            border-color: #f5c2c7;
+        }
+
+        .btn-outline-danger:hover {
+            color: #fff;
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
     </style>
+
+    <!-- JavaScript pour les modales et SimpleMDE -->
+    <script>
+        // Fonctions globales pour les modales
+        function openReportModal(id) {
+            const modal = document.getElementById('reportModal-' + id);
+            if(modal) modal.style.display = 'block';
+        }
+
+        function closeReportModal(id) {
+            const modal = document.getElementById('reportModal-' + id);
+            if(modal) modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('custom-modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Initialisation SimpleMDE
+        document.addEventListener('DOMContentLoaded', function() {
+            const textArea = document.getElementById("reply-content");
+            if (textArea) {
+                var editor = new SimpleMDE({
+                    element: textArea,
+                    spellChecker: false,
+                    forceSync: true,
+                    toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen"]
+                });
+
+                const submitBtn = document.getElementById('submit-reply');
+                if (submitBtn) {
+                    submitBtn.addEventListener('click', function() {
+                        if (!editor.value().trim()) {
+                            alert("Veuillez entrer une réponse.");
+                            return;
+                        }
+                        document.getElementById('reply-form').submit();
+                    });
+                }
+            }
+        });
+    </script>
 @endsection

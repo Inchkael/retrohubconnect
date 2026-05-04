@@ -52,12 +52,6 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent" type="button" role="tab">Envoyés</button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="drafts-tab" data-bs-toggle="tab" data-bs-target="#drafts" type="button" role="tab">Brouillons</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">Signalements</button>
-                </li>
             </ul>
 
             <div class="tab-content">
@@ -87,38 +81,6 @@
                     @else
                         <div class="list-group">
                             @foreach($sentMessages as $message)
-                                @include('messages.partials.message-card', ['message' => $message])
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
-
-                <!-- Brouillons -->
-                <div class="tab-pane fade" id="drafts" role="tabpanel">
-                    @if($drafts->isEmpty())
-                        <div class="text-center py-4">
-                            <i class="bi bi-file-earmark" style="font-size: 2rem; color: var(--secondary-color); margin-bottom: 1rem;"></i>
-                            <p style="color: var(--text-color);">Aucun brouillon</p>
-                        </div>
-                    @else
-                        <div class="list-group">
-                            @foreach($drafts as $message)
-                                @include('messages.partials.message-card', ['message' => $message])
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
-
-                <!-- Signalements -->
-                <div class="tab-pane fade" id="reports" role="tabpanel">
-                    @if($reports->isEmpty())
-                        <div class="text-center py-4">
-                            <i class="bi bi-flag" style="font-size: 2rem; color: var(--secondary-color); margin-bottom: 1rem;"></i>
-                            <p style="color: var(--text-color);">Aucun signalement</p>
-                        </div>
-                    @else
-                        <div class="list-group">
-                            @foreach($reports as $message)
                                 @include('messages.partials.message-card', ['message' => $message])
                             @endforeach
                         </div>
